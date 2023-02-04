@@ -5,6 +5,7 @@
 const std = @import("std");
 const assert = std.debug.assert;
 const c = @import("c.zig");
+const expect = std.testing.expect;
 
 pub fn register_function(
     env: c.napi_env,
@@ -40,6 +41,17 @@ pub fn capture_undefined(env: c.napi_env) !c.napi_value {
     }
 
     return result;
+}
+
+// get arguments to a function
+pub fn getArgv(env: c.napi_env, info: c.napi_callback_info, comptime count: usize) ![count]c.napi_value {
+    var argv: [count]c.napi_value = undefined;
+    var argc: usize = count;
+    const status = c.napi_get_cb_info(env, info, &argc, &argv, null, null);
+    if (status != c.napi_ok) {
+        return throw(env, "failed to parse arguments to a function");
+    }
+    return argv;
 }
 
 // pub fn set_instance_data(
@@ -352,6 +364,18 @@ pub fn capture_undefined(env: c.napi_env) !c.napi_value {
 
 //     return result;
 // }
+pub fn getArrayElement(env: c.napi_env, info: c.napi_callback_info) !c.napi_value {
+    const args = getArgv(env, info, 3) catch return null;
+    var res: c.napi_value = undefined;
+    var i: i32 = 0;
+    if (c.napi_get_value_int32(env, args[1], &i) != c.napi_ok) {
+        return throw(env, "Failed to convert index to int32");
+    }
+    if (c.napi_get_element(env, args[0], @bitCast(u32, i), &res) != c.napi_ok) {
+        return throw(env, "Failed to get array element");
+    }
+    return res;
+}
 
 pub fn create_string(env: c.napi_env, value: [:0]const u8) !c.napi_value {
     var result: c.napi_value = undefined;
