@@ -21,3 +21,6 @@ fi
 echo "Extracting $HEADERS_TARBALL..."
 tar -xf $HEADERS_TARBALL -C ./deps
 rm $HEADERS_TARBALL
+
+# Generate napi.zig
+zig translate-c deps/node-$(node --version)/include/node/node_api.h > src/napi.zig
